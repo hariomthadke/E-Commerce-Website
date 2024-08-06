@@ -79,6 +79,8 @@ One of the best features of the project is the mailing system. The user receives
 ### OTP Verification page
 ![OTP-Verification-Page](https://github.com/user-attachments/assets/bde2dca6-6887-4c38-a2e5-a83c683458d3)
 
+### Registration Successful Mail
+![Registration-Successful-Mail](https://github.com/user-attachments/assets/df995090-8ac9-4d6c-8953-ae347fb1d89b)
 
 
 

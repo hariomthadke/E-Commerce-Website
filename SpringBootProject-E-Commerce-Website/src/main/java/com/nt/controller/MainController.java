@@ -528,6 +528,12 @@ public class MainController {
 	public String updateUserDetails(@ModelAttribute Users user) {
 		//update user details (com.nt.service.UserServiceImpl)
 		userService.updateUser(user);
+		//Get user details
+		Users userDetails=(Users)session.getAttribute("activeUser");
+		//Get Updated user details from DB
+		Users updatedUserDetails=userService.getUserById(userDetails.getId());
+		//Store updated user details into session scope
+		session.setAttribute("activeUser", updatedUserDetails);
 		return "redirect:userProfile";
 	}
 

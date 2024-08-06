@@ -60,7 +60,7 @@
 						</c:otherwise>
 					</c:choose>
 
-					<br> <span class="fs-5"><b>Category : </b></span> <span>${product.categoryType}</span>
+					<br> <span class="fs-5"><b>Category : </b></span> <span>${categoryType}</span>
 					<form method="post">
 						<div class="container-fluid text-center mt-3">
 							<c:choose>

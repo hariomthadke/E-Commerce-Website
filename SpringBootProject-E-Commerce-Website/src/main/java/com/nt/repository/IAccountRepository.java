@@ -28,6 +28,8 @@ public interface IAccountRepository extends CrudRepository<Account, Integer> {
      public void updateEnabledStatus(@Param("username") String username);
     
     //Delete account by username
+    @Modifying
+    @Transactional
     @Query("DELETE FROM Account u WHERE  u.username = :username")
     public void deleteAccountByUsername(@Param("username") String username);
     

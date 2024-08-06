@@ -411,14 +411,19 @@ public class MainController {
 	}
 	
 	
-     //Display all products
+       //Display all products
 	@GetMapping("/displayProducts")
 	@PreAuthorize("hasAuthority('admin')")
 	public String displayProducts(Map<String, Object> map) {
 		//Get list of all available products (com.nt.service.ProductServiceImpl)
 		List<Products> pro = productService.getAllProducts();
-		//store the product list into map object
+		//Get all Category Types
+		HashMap<Integer, String> categoryTypes=categoryService.getAllCategoryTypes();
+		
+		//Store the product list into map object
 		map.put("productList", pro);
+		//Store category types list into map object
+		map.put("categoryType", categoryTypes);
 		return "display_products";
 	}
 	

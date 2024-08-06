@@ -20,5 +20,7 @@ public interface ICategoryService {
 	public String deleteCategoryById(Integer categoryId);
 	//Find category by category id
 	public Category findCategoryById(Integer categoryId);
+	//Get all Category Types
+	public HashMap<Integer, String> getAllCategoryTypes();
 
 }

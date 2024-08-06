@@ -568,8 +568,13 @@ public class MainController {
 	public String viewProduct(@RequestParam("pid") String id, Map<String, Object> map) {
 		//Get product by product id (com.nt.service.ProductServiceImpl)
 		Products prod = productService.findProductById(Integer.parseInt(id));
+		//Get Category type (com.nt.service.CategoryServiceImpl)
+		String categoryType=categoryService.findCategoryById(prod.getCategoryType()).getName();
+		
 		//Store product details to map object
 		map.put("product", prod);
+		//Store product category type to map object
+		map.put("categoryType", categoryType);
 		return "viewProduct";
 	}
 

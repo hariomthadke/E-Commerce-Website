@@ -16,14 +16,14 @@ One of the best features of the project is the mailing system. The user receives
 
 2. Back-End Development:
 - Java 17
--	JDBC (Java Database Connectivity)
--	Servlet
+-	Spring Boot 3.x
+-	Spring Boot Security 6.x
 -	JSP (JavaServer Pages)
 
 3. Database:
-- MySql (8.0)
+- Oracle 19c
 
-4. Software and Tools
+4. IDE & Server
 - Eclipse EE
-- Tomcat 10
-- MySQL workbench
+- Tomcat 10.x
+

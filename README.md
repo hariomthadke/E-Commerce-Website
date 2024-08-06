@@ -31,7 +31,7 @@ One of the best features of the project is the mailing system. The user receives
 ### Home page
 ![Home-Page](https://github.com/user-attachments/assets/4cce784c-3dda-47d6-8671-789722c41be0)
 
-### Products
+### Products (Category: Fashion)
 ![Products](https://github.com/user-attachments/assets/ee92c862-c9ac-49f1-8ad7-8fa0c1bc6866)
 
 ### Product Details

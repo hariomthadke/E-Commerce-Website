@@ -186,6 +186,10 @@ public class OrderServiceImpl implements IOrderService{
 	//Update order status
 	@Override
 	public String updateOrderStatusByOrderId(String orderStatus, String orderId) {
+		//If order status is Deliverd then delete that order
+		if(orderStatus.equals("Delivered")) {
+			repo.deleteById(Integer.parseInt(orderId));
+		}else {
 		//Get Order object by order id
 		Optional<Order> op=repo.findById(Integer.parseInt(orderId));
 
@@ -197,7 +201,7 @@ public class OrderServiceImpl implements IOrderService{
 			//Save the updated order back to the database
 			repo.save(order);
 		}
+		}
 		return "Order Updated Successfully";
 	}
-
 }

@@ -27,6 +27,11 @@ One of the best features of the project is the mailing system. The user receives
 - Eclipse EE
 - Tomcat 10.x
 
+## Screenshot of projects:-
+###Home Page
+![Admin-Profile](https://github.com/user-attachments/assets/9b52304b-f435-49ee-8f87-ecb6d1485d49)
+![Admin-Dashboard](https://github.com/user-attachments/assets/f886ccbb-c32a-4f26-b49a-1afaf990fb4b)
+![Add-Product](https://github.com/user-attachments/assets/373cb571-9474-4949-8b86-b6056fecca17)
 
 
 

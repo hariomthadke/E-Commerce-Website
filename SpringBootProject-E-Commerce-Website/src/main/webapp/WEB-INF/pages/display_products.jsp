@@ -29,7 +29,7 @@
 					<td><img src="uploads/${prod.image}"
 						style="width: 60px; height: 60px; width: auto;"></td>
 					<td class="text-start">${prod.name}</td>
-					<td>${prod.categoryType}</td>
+					<td>${categoryType[prod.categoryType]}</td>
 					<td>&#8377;${prod.price}</td>
 					<td>${prod.quantity}</td>
 					<td>${prod.discount}%</td>

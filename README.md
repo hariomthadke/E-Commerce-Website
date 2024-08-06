@@ -9,22 +9,21 @@ One of the best features of the project is the mailing system. The user receives
 
 ### Technologies used:-
 1. Front-End Development:
-• HTML
-• CSS
-• Javascript/jQuery
-• BootStrap
+- HTML
+- CSS
+- Javascript/jQuery
+- BootStrap
 
 2. Back-End Development:
-• Java 17
-•	Spring Boot 3.x
-•	Spring Boot Security 6.x
-•	JSP (JavaServer Pages)
+- Java 17
+-	JDBC (Java Database Connectivity)
+-	Servlet
+-	JSP (JavaServer Pages)
 
 3. Database:
-• Oracle 19c
+- MySql (8.0)
 
 4. Software and Tools
-• Eclipse EE
-• Maven
-• Tomcat 10.x
-  
+- Eclipse EE
+- Tomcat 10
+- MySQL workbench

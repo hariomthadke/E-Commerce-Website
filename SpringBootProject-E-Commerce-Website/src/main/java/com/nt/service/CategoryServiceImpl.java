@@ -130,4 +130,18 @@ public class CategoryServiceImpl implements ICategoryService {
 			return null;
 		}
 	}
+
+	//Get all category Types
+	@Override
+	public HashMap<Integer, String> getAllCategoryTypes() {
+		HashMap<Integer, String> hashMap=new HashMap<>();
+		//Get all Category List
+		List<Category> categoryList=(List<Category>) repo.findAll();
+		
+		//Store category id & category name into hashmap
+		for(Category category:categoryList) {
+			hashMap.put(category.getId(), category.getName());
+		}
+		return hashMap;
+	}
 }

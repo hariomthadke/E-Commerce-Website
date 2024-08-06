@@ -77,8 +77,9 @@
 
 									<td>&#8377;${cart.productDetails.priceAfterDiscount}</td>
 									<td>
-										<div class="text-center">${cart.quantity}</div> &#8377;
-										${cart.quantity * cart.productDetails.priceAfterDiscount}
+										<div class="text-center">${cart.quantity}</div> 
+									</td>
+										<td class="text-center"> &#8377;${cart.quantity * cart.productDetails.priceAfterDiscount}
 									</td>
 									<td><a href="removeCart?cartId=${cart.id}"
 										class="btn btn-secondary" role="button">Remove</a></td>

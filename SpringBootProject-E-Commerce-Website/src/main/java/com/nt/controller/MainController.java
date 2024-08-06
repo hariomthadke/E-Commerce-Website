@@ -630,6 +630,9 @@ public class MainController {
 	//It execute for each request
 	@ModelAttribute
 	public void addAttributes(Map<String, Object> map, HttpServletResponse response) {
+		// get all categories and save to map
+		List<Category> categoryList = categoryService.getAllCategory();
+		map.put("categoryList", categoryList);
 		try {
 			//Get active user object
 			Users user = (Users) session.getAttribute("activeUser");
@@ -649,12 +652,6 @@ public class MainController {
 			}
 			//Store total cart count to map object
 			map.put("totalCartCount", count);
-			
-			// get all categories and save to map
-			List<Category> categoryList = categoryService.getAllCategory();
-			map.put("categoryList", categoryList);
-
-			
 		}catch(Exception e) { //If 'activeUser' is not found in session object
                 //Catch the exception and do noting
 		}

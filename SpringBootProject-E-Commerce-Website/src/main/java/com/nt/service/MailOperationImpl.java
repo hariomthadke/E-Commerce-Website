@@ -3,6 +3,7 @@ package com.nt.service;
 import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import jakarta.servlet.http.HttpSession;
@@ -10,19 +11,17 @@ import jakarta.servlet.http.HttpSession;
 @Service
 public class MailOperationImpl implements IMailOperation {
 
-	@Autowired
-	private HttpSession session;
+
 	@Autowired
 	private ISpringBootMail mail;
 
 	//Send verification code (OTP) on give email
 	@Override
-	public boolean sendVerficationCode(String email) {
+	@Async
+	public void sendVerficationCode(String email, Integer verificationCode) {
 		boolean flag;
-		//Create Random object and generate random verification code (OTP)
-		Random random = new Random();
-		Integer verificationCode = random.nextInt(12345, 99999);
-
+	
+        
 		try {
 			// Define the email subject
 			String subject = "Eazy Deals Verification Code";
@@ -41,10 +40,7 @@ public class MailOperationImpl implements IMailOperation {
 			
 			// Send the email
 			flag = mail.sendMail(subject, body, recipients);
-			
-			// Store the verification code and email in the session
-			session.setAttribute("verificationCode", verificationCode);
-			session.setAttribute("email", email);
+		
 		} catch (Exception e) {
 			// Print the stack trace if an exception occurs
 			e.printStackTrace();
@@ -52,14 +48,13 @@ public class MailOperationImpl implements IMailOperation {
 			flag=false;
 		}
 
-		// Return the flag indicating success or failure
-		return flag;
 	}
 
 
 	//Send email for successful registration
 	@Override
-	public String sendSuccessfulRegistrationMail(String userName, String email) {
+	@Async
+	public void sendSuccessfulRegistrationMail(String userName, String email) {
 		// Define the email subject
 		String subject = " Welcome to EazyDeals, " + userName+ "!";
 		// Construct the email body with HTML content
@@ -83,13 +78,9 @@ public class MailOperationImpl implements IMailOperation {
 		} catch (Exception e) {
 			// Print the stack trace if an exception occurs
 			e.printStackTrace();
-			// Return message
-			return "Unable to sent Registration mail";
+
 		}
-        //Return message
-		return "Registration successful Mail sent successfully";
+ 
 	}
-
-
 
 }

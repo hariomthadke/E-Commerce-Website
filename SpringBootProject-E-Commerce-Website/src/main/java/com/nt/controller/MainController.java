@@ -62,11 +62,11 @@ public class MainController {
 	@Autowired
 	HttpSession session;
 
-	
+
 	// It returns Home Page
 	@GetMapping("/")
 	public String homePage(Map<String, Object> map) {
-		
+
 		// get latest 3 products and save to map
 		List<Products> productList = productService.getLatestThreeProducts();
 		map.put("productList", productList);
@@ -79,43 +79,59 @@ public class MainController {
 		return "index";
 	}
 
-	
+
 	// It returns User registration page
 	@GetMapping("/register")
 	public String showRegisterForm() {
 		return "register";
 	}
 
-	
+
 	// It performs pre-operation before registring the user 
 	@PostMapping("/register")
 	public String registerUser(@ModelAttribute("user") Users user, @RequestParam("password") String password) {
-        //send verification code to user for email verification
-		boolean flag=mailOperation.sendVerficationCode(user.getEmail());
-       
-		if(flag) {  //If email is successfully sent
-			//Display message
-			Message  message = new Message("We'ev sent a verification code to "+user.getEmail(),  "success", "alert-success"); 
-			session.setAttribute("message", message);
-			//Store the user registration details in session scope for later use
-			session.setAttribute("userDetails", user);
-			//first encrypt password 
-			String pwd=encoder.encode(password);
-			//Store the password in the session scope for later use
-			session.setAttribute("password", pwd);
-			return  "redirect:enterOTP";
-		}else { //If email is not sent successfully
-			Message  message = new Message("Unable sent a verification code to "+user.getEmail(),  "error", "alert-danger"); 
-			session.setAttribute("message", message);
-			return  "redirect:register";
-		}
+		//send verification code to user for email verification
+		//boolean flag=false; //mailOperation.sendVerficationCode(user.getEmail());
+
+		Random random = new Random();
+		Integer verificationCode = random.nextInt(12345, 99999);
+
+		//Send verification OTP to user through email
+		mailOperation.sendVerficationCode(user.getEmail(), verificationCode);
+		session.setAttribute("verificationCode", verificationCode);
+		session.setAttribute("email", user.getEmail());
+
+		//Store the user registration details in session scope for later use
+		session.setAttribute("userDetails", user);
+		//first encrypt password 
+		String pwd=encoder.encode(password);
+		//Store the password in the session scope for later use
+		session.setAttribute("password", pwd);
+		return "redirect:enterOTP";
+
+		//		if(flag) {  //If email is successfully sent
+		//			//Display message
+		//			Message  message = new Message("We'ev sent a verification code to "+user.getEmail(),  "success", "alert-success"); 
+		//			session.setAttribute("message", message);
+		//			//Store the user registration details in session scope for later use
+		//			session.setAttribute("userDetails", user);
+		//			//first encrypt password 
+		//			String pwd=encoder.encode(password);
+		//			//Store the password in the session scope for later use
+		//			session.setAttribute("password", pwd);
+		//			return  "redirect:enterOTP";
+		//		}else { //If email is not sent successfully
+		//			Message  message = new Message("Unable sent a verification code to "+user.getEmail(),  "error", "alert-danger"); 
+		//			session.setAttribute("message", message);
+		//			return  "redirect:register";
+		//		}
 	}
-    
-	
+
+
 	//If performs user registration operation
 	@GetMapping("/registerUser")
 	public String saveUserDetails() {
-        //Get user registration details from session scope
+		//Get user registration details from session scope
 		Users user=(Users)session.getAttribute("userDetails");
 		//Remove user registration details from session scope
 		session.removeAttribute("userDetails");
@@ -123,14 +139,15 @@ public class MainController {
 		String password=(String) session.getAttribute("password");
 		//Remove password from session scope
 		session.removeAttribute("password");
-		
+
 		// call registerUser(com.nt.service.UsersServiceImpl.java) method to save
 		String  result= userService.registerUser(user, password); //returns successful message
-		
-        //Display message
+
+		//Display message
 		Message  message = new Message(result,  "success", "alert-success"); 
 		session.setAttribute("message", message);
-		
+
+		mailOperation.sendSuccessfulRegistrationMail(user.getName(), user.getEmail());
 		return "redirect:login";
 	}
 
@@ -141,7 +158,7 @@ public class MainController {
 		return "login";
 	}
 
-	
+
 	// It returns Admin login page
 	@GetMapping("/adminlogin")
 	public String adminLogin() {
@@ -159,7 +176,7 @@ public class MainController {
 		map.put("category", cat);
 		return "admin";
 	}
-	
+
 
 	// It return page for resetting password
 	@GetMapping("/forgotPassword")
@@ -167,13 +184,26 @@ public class MainController {
 		return "forgot_password";
 	}
 
-	
+
+	@GetMapping("/resendOTP")
+	public String  resendOTP() {
+		Random random = new Random();
+		Integer verificationCode = random.nextInt(12345, 99999);
+		//Send verification OTP to user through email
+		mailOperation.sendVerficationCode(session.getAttribute("email").toString(), verificationCode);
+		session.setAttribute("verificationCode", verificationCode);
+		Message message = new Message("We'ev sent a password reset code to " + session.getAttribute("email"), "success", "alert-success");
+		session.setAttribute("message", message);
+		return "redirect:enterOTP";
+	}
+
+
 	// It performs user verification operation before resetting the password
 	@PostMapping("/forgotPassword")
 	public String forgotPassword(@RequestParam("email") String email) {
 		//Check is given email is available or not 
 		boolean flag = userService.isEmailAvailable(email);
-      
+
 		if (!flag) {//user is not found 
 			//Display message
 			Message message = new Message("Email not found! Try with another email!", "error", "alert-danger");
@@ -181,43 +211,51 @@ public class MainController {
 			//redirect to same page
 			return "redirect:forgotPassword";
 		}else{ //user is found
-		//Send verification OTP to user through email
-		boolean flag2 = mailOperation.sendVerficationCode(email);
-		
-		if(flag2) {// Email sent successfully
+
+			Random random = new Random();
+			Integer verificationCode = random.nextInt(12345, 99999);
+			//Send verification OTP to user through email
+			mailOperation.sendVerficationCode(email, verificationCode);
+			session.setAttribute("verificationCode", verificationCode);
+			session.setAttribute("email", email);
 			Message message = new Message("We'ev sent a password reset code to " + email, "success", "alert-success");
 			session.setAttribute("message", message);
-			//Redirect to OTP page
 			return "redirect:enterOTP";
-		}else {// Email is unable to sent
-			Message message = new Message("Unable to  sent a password reset code to " + email, "error", "alert-danger");
-			session.setAttribute("message", message);
-			//Redirect to same page
-			return "redirect:forgotPassword";
-		}
+
+			//		if(flag2) {// Email sent successfully
+			//			Message message = new Message("We'ev sent a password reset code to " + email, "success", "alert-success");
+			//			session.setAttribute("message", message);
+			//			//Redirect to OTP page
+			//			return "redirect:enterOTP";
+			//		}else {// Email is unable to sent
+			//			Message message = new Message("Unable to  sent a password reset code to " + email, "error", "alert-danger");
+			//			session.setAttribute("message", message);
+			//			//Redirect to same page
+			//			return "redirect:forgotPassword";
+			//		}
 		}
 	}
 
-	
+
 	//It returns page where use can enter OTP
 	@GetMapping("enterOTP")
 	public String showOTPPage() {
 		return "otp_code";
 	}
 
-	
+
 	//It performs OTP verification operation
 	@PostMapping("/verifyCode")
 	public String verifyCode(@RequestParam("code") Integer code) {
-        //Check entered OTP is correct or not 
+		//Check entered OTP is correct or not 
 		if (code.equals(session.getAttribute("verificationCode"))) { //If OTP matches with actual code
 			//Remove verification code from session scope
 			session.removeAttribute("verificationCode");
-			
+
 			//Verification of the  OTP at the time of user registration process
 			if(session.getAttribute("userDetails")!=null) return "redirect:registerUser";
 			else {//Verification of the OTP at the time of resetting password
-			return "change_password";
+				return "change_password";
 			}
 		} else {//If OTP not matches with actual code
 			//Display message
@@ -226,7 +264,7 @@ public class MainController {
 			return "redirect:enterOTP";
 		}
 	}
-	
+
 
 	//It performs password reset operation
 	@PostMapping("/changePassword")
@@ -241,24 +279,24 @@ public class MainController {
 		return "redirect:login";
 	}
 
-	
+
 	// Perform Category Image saving operation in database
 	@PostMapping("/addCategory")
 	@PreAuthorize("hasAuthority('admin')")
 	public String addCategory(@RequestParam("name") String name, @RequestParam("file") MultipartFile file,
 			Map<String, Object> map) {
-        //Generate random number upto 100
+		//Generate random number upto 100
 		Integer random = new Random().nextInt(100);
 		//Get original file name from MultipartFile
 		String fileName = file.getOriginalFilename();
 		//First store file into local folder (com.nt.service.CategoryServiceImpl)
 		boolean status = categoryService.storeCategoryImage(file, random);
-		  //pass random number + filename 
-        
+		//pass random number + filename 
+
 		//Store new Category details & file path in database 
 		if (status) {//If file is stored at local level successfully
 			//Add new category in database  (com.nt.service.CategoryServiceImpl)
-			 status = categoryService.addCategory(name, random + fileName);
+			status = categoryService.addCategory(name, random + fileName);
 		}
 
 		if (status) {//If new category is added successfully
@@ -271,7 +309,7 @@ public class MainController {
 		return "redirect:admin";
 	}
 
-	
+
 	// It returns admin page
 	@GetMapping("/displayAdmin")
 	@PreAuthorize("hasAuthority('admin')")
@@ -283,7 +321,7 @@ public class MainController {
 		return "display_admin";
 	}
 
-	
+
 	// It performs admin registration operation
 	@PostMapping("/registerAdmin")
 	@PreAuthorize("hasAuthority('admin')")
@@ -294,7 +332,7 @@ public class MainController {
 		adminService.registerAdmin(ad, pwd);
 		return "redirect:displayAdmin";
 	}
-	
+
 
 	// It perform admin deletion operation
 	@GetMapping("/deleteAdmin")
@@ -305,7 +343,7 @@ public class MainController {
 		System.out.println(res);
 		return "redirect:displayAdmin";
 	}
-	
+
 
 	// It returns page which contains all users information
 	@GetMapping("/displayUsers")
@@ -317,7 +355,7 @@ public class MainController {
 		map.put("usersList", usersList);
 		return "display_users";
 	}
-	
+
 
 	// It performs user deletion operation
 	@GetMapping("/deleteUser")
@@ -328,7 +366,7 @@ public class MainController {
 		return "redirect:displayUsers";
 	}
 
-	
+
 	// It returns page which shows all available categories
 	@GetMapping("/displayCategories")
 	@PreAuthorize("hasAuthority('admin')")
@@ -339,7 +377,7 @@ public class MainController {
 		map.put("categoryList", categoryList);
 		return "display_category";
 	}
-	
+
 
 	// It performs category deletion operation
 	@GetMapping("/deleteCategory")
@@ -349,13 +387,13 @@ public class MainController {
 		categoryService.deleteCategoryById(Integer.parseInt(id));
 		return "redirect:displayCategories";
 	}
-	
+
 
 	// It returns page for category updation
 	@GetMapping("/updateCategory")
 	@PreAuthorize("hasAuthority('admin')")
 	public String updateCategory(@RequestParam("id") String id, @ModelAttribute("category") Category cat,
-			                                                    Map<String, Object> map) {
+			Map<String, Object> map) {
 		//Get category by category id(com.nt.service.CategoryServiceImpl)
 		Category category = categoryService.findCategoryById(Integer.parseInt(id));
 		//Store category details to model Attribute class Category
@@ -367,23 +405,23 @@ public class MainController {
 		return "update_category";
 	}
 
-	
+
 	// It performs category updation operation
 	@PostMapping("/updateCategory")
 	@PreAuthorize("hasAuthority('admin')")
 	public String updateCategory(@ModelAttribute("category") Category category,
-			                                                   @RequestParam("file") MultipartFile file) {
+			@RequestParam("file") MultipartFile file) {
 		//Update Category Details (com.nt.service.CategoryServiceImpl)
 		categoryService.updateCategory(category, file);
 		return "redirect:displayCategories";
 	}
-	
+
 
 	// It perform product addition operation
 	@PostMapping("/addProduct")
 	@PreAuthorize("hasAuthority('admin')")
 	public String addProduct(@ModelAttribute("product") Products product,
-			                                         @RequestParam("filePath") MultipartFile file) {
+			@RequestParam("filePath") MultipartFile file) {
 		//Generate random number upto 100
 		Integer random = new Random().nextInt(100);
 		//Get original file name from MultipartFile object
@@ -392,7 +430,7 @@ public class MainController {
 		product.setImage(random + imageName);
 		//store product image to local folder
 		boolean status =productService.storeProductImage(file, random);
-      
+
 		if (status) {//If image store at local folder successfully
 			//Save product details to database
 			status =  productService.addProduct(product);
@@ -409,9 +447,9 @@ public class MainController {
 		}
 		return "redirect:admin";
 	}
-	
-	
-       //Display all products
+
+
+	//Display all products
 	@GetMapping("/displayProducts")
 	@PreAuthorize("hasAuthority('admin')")
 	public String displayProducts(Map<String, Object> map) {
@@ -419,16 +457,16 @@ public class MainController {
 		List<Products> pro = productService.getAllProducts();
 		//Get all Category Types
 		HashMap<Integer, String> categoryTypes=categoryService.getAllCategoryTypes();
-		
+
 		//Store the product list into map object
 		map.put("productList", pro);
 		//Store category types list into map object
 		map.put("categoryType", categoryTypes);
 		return "display_products";
 	}
-	
-	
-     //It performs product deletion operation
+
+
+	//It performs product deletion operation
 	@GetMapping("/deleteProduct")
 	@PreAuthorize("hasAuthority('admin')")
 	public String deleteProduct(@RequestParam("id") String id) {
@@ -436,37 +474,37 @@ public class MainController {
 		productService.deleteProductById(Integer.parseInt(id));
 		return "redirect:displayProducts";
 	}
-	
+
 
 	// It returns page for product updation
 	@GetMapping("/updateProduct")
 	@PreAuthorize("hasAuthority('admin')")
 	public String updateProduct(@RequestParam("id") String id, @ModelAttribute("product") Products pr,
-			                                                 Map<String, Object> map) {
+			Map<String, Object> map) {
 		//Get Product Details (com.nt.service.ProductServiceImpl)
 		Products product = productService.findProductById(Integer.parseInt(id));
 		//Copy properties from the existing product to the new pr object
 		BeanUtils.copyProperties(product, pr);
-        //Store product details to map object
+		//Store product details to map object
 		map.put("prod", product);
-        //Get all Category (com.nt.service.CategoryServiceImpl)
+		//Get all Category (com.nt.service.CategoryServiceImpl)
 		List<Category> category = categoryService.getAllCategory();
 		//Store category list to map object
 		map.put("categoryList", category);
 		return "update_product";
 	}
-	
+
 
 	//It performs product updation operation
 	@PostMapping("/updateProduct")
 	@PreAuthorize("hasAuthority('admin')")
 	public String updateProduct(@ModelAttribute Products product, @RequestParam("filePath") MultipartFile file) {
-        //Update product details(com.nt.service.ProductServiceImpl)
+		//Update product details(com.nt.service.ProductServiceImpl)
 		productService.updateProduct(product, file);
 		return "redirect:displayProducts";
 	}
-     
-	
+
+
 	//It displays all orders
 	@GetMapping("/displayOrders")
 	@PreAuthorize("hasAuthority('admin')")
@@ -475,15 +513,15 @@ public class MainController {
 		List<Order> orderList=orderService.getAllOrders();
 		//Store order list into map object
 		map.put("orderList", orderList);
-		
+
 		//Get all order address
 		HashMap<Integer, String> userAddress=orderService.getAllOrdersAddress(orderList);
 		//Store order address into map object
 		map.put("userAddress", userAddress);
-		
+
 		return "display_orders";
 	}
-	
+
 
 	//It performs order status updation operation
 	@PostMapping("/updateOrderStatus")
@@ -493,8 +531,8 @@ public class MainController {
 		orderService.updateOrderStatusByOrderId(orderStatus, orderId);
 		return "redirect:displayOrders";
 	}
-     
-	
+
+
 	//It will show user profile
 	@GetMapping("/userProfile")
 	@PreAuthorize("hasAuthority('user')")
@@ -507,7 +545,7 @@ public class MainController {
 		// Do not copy 'user' directly to 'storeUserDetails' to ensure immediate reflection of updates
 		BeanUtils.copyProperties(userDetails, storeUserDetails);
 
- 
+
 		//Get all wishlist items of active user(com.nt.wishlistServiceImpl)
 		List<Products> productList = wishlistService.getAllWishlistProductsByUserId(user.getId());
 		//Store wishlist product list to map object
@@ -521,7 +559,7 @@ public class MainController {
 		return "profile";
 	}
 
-	
+
 	//It performs active user updation operation
 	@PostMapping("/updateUserDetails")
 	@PreAuthorize("hasAuthority('user')")
@@ -537,7 +575,7 @@ public class MainController {
 		return "redirect:userProfile";
 	}
 
-	
+
 	//It will display products (All products or perticular Category products)
 	@GetMapping("/products")
 	public String showProducts(Map<String, Object> map, @RequestParam(name = "category", required = false) String id) {
@@ -559,21 +597,21 @@ public class MainController {
 		if(user!=null) { //If active user found
 			//Get all wishlist by active user id(com.nt.service.WishlistServiceImpl)
 			List<WishList> wishList = wishlistService.getAllWishlistByActiveUserId(user.getId());
-            //Declare list to store wishlist product id
+			//Declare list to store wishlist product id
 			List<Integer> wishListProd = new ArrayList<>();
 			//Store product id to 'wishListProd'
 			for (WishList wl : wishList) {
 				wishListProd.add(wl.getPid());
 			}
-            
+
 			//Store wishlist product is to map object
 			map.put("wishList", wishListProd);
 		}
-	
+
 		return "products";
 	}
 
-	
+
 	//It will return page that will show product details
 	@GetMapping("/viewProduct")
 	public String viewProduct(@RequestParam("pid") String id, Map<String, Object> map) {
@@ -581,7 +619,7 @@ public class MainController {
 		Products prod = productService.findProductById(Integer.parseInt(id));
 		//Get Category type (com.nt.service.CategoryServiceImpl)
 		String categoryType=categoryService.findCategoryById(prod.getCategoryType()).getName();
-		
+
 		//Store product details to map object
 		map.put("product", prod);
 		//Store product category type to map object
@@ -589,29 +627,29 @@ public class MainController {
 		return "viewProduct";
 	}
 
-	
+
 	//It will add product to  user cart
 	@PostMapping("/addToCart")
 	@PreAuthorize("hasAuthority('user')")
 	public String addToCart(@RequestParam("userId") Integer uid, @RequestParam("productId") Integer pid,
-		                                        	@RequestParam("quantity") Integer quantity) {
+			@RequestParam("quantity") Integer quantity) {
 		//Add to cart (com.nt.service.CartServiceImpl)
 		String result = cartService.saveToCart(uid, pid, quantity);
-        //Display message
+		//Display message
 		Message message = new Message(result, "success", "alert-success");
 		session.setAttribute("message", message);
-        //redirect to same page
+		//redirect to same page
 		return "redirect:viewProduct?pid=" + pid;
 	}
 
-	
+
 	//show cart items of active user
 	@GetMapping("/showCart")
 	@PreAuthorize("hasAuthority('user')")
 	public String showCart(@RequestParam("uid") String uid, Map<String, Object> map) {
 		//Get all cart items of current user (com.nt.service.CartServiceImpl)
 		List<Cart> cartList = cartService.getAllCartProductsByActiveUserId(Integer.parseInt(uid));
-        
+
 		//calculate total price
 		int totalPrice = 0;
 		for (Cart cart : cartList) {
@@ -619,7 +657,7 @@ public class MainController {
 		}
 		//Store total price to map object
 		map.put("totalPrice", totalPrice);
-		
+
 		if (cartList.size() == 0) {//If cart is empty
 			map.put("cartList", null);
 		} else {
@@ -629,7 +667,7 @@ public class MainController {
 		return "cart";
 	}
 
-	
+
 	//Remove item from cart 
 	@GetMapping("/removeCart")
 	@PreAuthorize("hasAuthority('user')")
@@ -642,7 +680,7 @@ public class MainController {
 		return "redirect:showCart?uid=" + user.getId();
 	}
 
-	
+
 	//It execute for each request
 	@ModelAttribute
 	public void addAttributes(Map<String, Object> map, HttpServletResponse response) {
@@ -652,7 +690,7 @@ public class MainController {
 		try {
 			//Get active user object
 			Users user = (Users) session.getAttribute("activeUser");
-			
+
 			//Check if user active status
 			if(!userService.isUserActiveOrNot(user.getId())) { //If status is false
 				//remove active user object form session scope
@@ -660,7 +698,7 @@ public class MainController {
 				// Redirect to login page
 				response.sendRedirect("/login?logout");
 			}
-			
+
 			//Count total items of cart
 			int count = 0;
 			if (user != null) {
@@ -668,18 +706,22 @@ public class MainController {
 			}
 			//Store total cart count to map object
 			map.put("totalCartCount", count);
+
+
+
+
 		}catch(Exception e) { //If 'activeUser' is not found in session object
-                //Catch the exception and do noting
+			//Catch the exception and do noting
 		}
 	}
 
-	
+
 	//item or items checkout operation
 	@PostMapping("/checkout")
 	@PreAuthorize("hasAuthority('user')")
 	public String showCheckoutPage(HttpServletRequest request,
-			                                                          @RequestParam(name = "quantity", required = false) Integer quantity,
-			                                                          @RequestParam(name = "productId", required = false) String pid, Map<String, Object> map) {
+			@RequestParam(name = "quantity", required = false) Integer quantity,
+			@RequestParam(name = "productId", required = false) String pid, Map<String, Object> map) {
 
 		//Retrieve the request URL 
 		String referer = request.getHeader("Referer");
@@ -695,9 +737,9 @@ public class MainController {
 			from = "buy";
 		}
 
-	    //Users user = (Users) session.getAttribute("activeUser");
-		
-        //store 'from' & 'activeUser' into map object
+		//Users user = (Users) session.getAttribute("activeUser");
+
+		//store 'from' & 'activeUser' into map object
 		map.put("from", from);
 		map.put("user", activeUser);
 
@@ -712,18 +754,18 @@ public class MainController {
 				totalPrice += cart.getQuantity() * cart.getProductDetails().getPriceAfterDiscount();
 				totalProducts = totalProducts + cart.getQuantity();
 			}
-			
+
 			//Store total items count to map object(com.nt.service.CartServiceImpl)
 			map.put("totalItems", cartService.countTotalCartNoByUserId(activeUser.getId()));
 			//Store total product to map object
 			map.put("totalProducts", totalProducts);
 			//Store total price to map object
 			map.put("totalPrice", totalPrice);
-			
+
 		} else if (from.equals("buy")) {//Checkout perticular item
 			//Get product details(com.nt.service.ProductServiceImpl)
 			Products prod = productService.findProductById(Integer.parseInt(pid));
-			
+
 			//Check products are available in stock or not
 			if(prod.getQuantity()==0) {//product is out of stock
 				//Display message
@@ -740,20 +782,20 @@ public class MainController {
 				return "redirect:viewProduct?pid="+pid;
 			}
 			else { //Requested quantity of products are available in stock
-            //Store quantity into map object
-			map.put("quantity", quantity);
-            //Store product price into map object
-			map.put("productPrice", prod.getPriceAfterDiscount());
-			
-			//Store product id & quantity to session scope
-			session.setAttribute("buyingProductId", prod.getId());
-			session.setAttribute("buyingQuantity", quantity);
+				//Store quantity into map object
+				map.put("quantity", quantity);
+				//Store product price into map object
+				map.put("productPrice", prod.getPriceAfterDiscount());
+
+				//Store product id & quantity to session scope
+				session.setAttribute("buyingProductId", prod.getId());
+				session.setAttribute("buyingQuantity", quantity);
 			}
 		}
 
 		return "checkout";
 	}
-	
+
 
 	//It performs order placing operation
 	@PostMapping("/placeOrder")
@@ -765,7 +807,7 @@ public class MainController {
 		if(operation.equals("cart")) {//Place all cart items
 			//Place all cart items(com.nt.service.OrderServiceImpl)
 			HashMap<String, String> hashMap=orderService.placeAllCartOrders(userId, paymentMode);;
-            
+
 			if(hashMap.get("status").equals("false")) {// Failed to place order
 				//Display message
 				Message message = new Message(hashMap.get("message"), "error", "alert-danger");
@@ -781,7 +823,7 @@ public class MainController {
 			return "redirect:showCart?uid="+userId;
 
 		}else if(operation.equals("buy")) {//Place perticular item
-            //Get product id & Quantity from session scope
+			//Get product id & Quantity from session scope
 			Integer productId=(Integer) session.getAttribute("buyingProductId");
 			Integer quantity=(Integer)session.getAttribute("buyingQuantity");
 			//Remove product id & Quantity from session scope
@@ -809,12 +851,12 @@ public class MainController {
 			return "redirect:/";
 	}
 
-	
+
 	//Wishlist operation (Add to wishlist or remove from wishlist)
 	@GetMapping("/wishlist")
 	@PreAuthorize("hasAuthority('user')")
 	public String performWishListOperation(HttpServletRequest request, @RequestParam("uid") String uid,
-			                                                                       @RequestParam("pid") String pid, @RequestParam("op") String operation) {
+			@RequestParam("pid") String pid, @RequestParam("op") String operation) {
 		//Retrieve the URL of the previous page from the "Referer" header in the HTTP request
 		String referer = request.getHeader("Referer");
 
@@ -825,12 +867,12 @@ public class MainController {
 			//Remove product from wishlist (com.nt.service.WishlistServiceImpl)
 			wishlistService.removeWishlistProductByUserId(Integer.parseInt(uid), Integer.parseInt(pid));
 		}
-		
+
 		// Redirect to the same page from which the request originated, or to the home page if the referer is null
 		return "redirect:" + (referer != null ? referer : "/");
 	}
 
-	
+
 	//Return access denied page
 	@GetMapping("/accessDenied")
 	public String accessDeniedPage() {

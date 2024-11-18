@@ -57,6 +57,9 @@
 						<c:otherwise>
 							<span id="availability" style="color: red">Currently Out
 								of Stock</span>
+							<a href="/notify?pid=${product.id}" title="Notify when available"> <i
+								class="fa-solid fa-bell"></i>
+							</a>
 						</c:otherwise>
 					</c:choose>
 
@@ -194,7 +197,7 @@
 	String order = (String) session.getAttribute("order");
 	if (order != null) {
 		Users activeUser = (Users) session.getAttribute("activeUser");
-	    String userEmail = (activeUser != null) ? activeUser.getEmail() : "";
+		String userEmail = (activeUser != null) ? activeUser.getEmail() : "";
 	%>
 
 	<script type="text/javascript">

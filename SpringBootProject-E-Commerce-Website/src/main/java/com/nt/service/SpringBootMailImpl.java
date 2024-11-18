@@ -38,6 +38,7 @@ public class SpringBootMailImpl implements ISpringBootMail  {
 	        // Set the content of the email (true indicates the content is HTML)
 	        helper.setText(msg, true);        
 	        
+	        
 	        // Send the email
 	        sender.send(message);
 	    } catch(Exception e) {

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.init.RepositoriesPopulatedEvent;
 import org.springframework.stereotype.Service;
 
 import com.nt.model.Message;
@@ -69,11 +70,11 @@ public class UsersServiceImpl implements IUsersService {
 		Optional<Users> user=repo.findById(userId);
 		
 		if(user.isPresent()) {//If user present
+			//Update enabled status to 0 in Users table
+			repo.updateEnabledStatus(user.get().getEmail());
 			//Get user credentials from Account 
 			Account account=accountRepo.getAccountByUsername(user.get().getEmail());
 			if(account!=null) {
-				//Update enabled status to 0 in Users table
-				repo.updateEnabledStatus(account.getUsername());
 				//Update enabled status to 0 in Account table
 				accountRepo.updateEnabledStatus(account.getUsername());
 				//Display message
@@ -144,6 +145,24 @@ public class UsersServiceImpl implements IUsersService {
 			//Check user active status
 			if(user.get().isUserActive()) return true;
 		}
+		return false;
+	}
+
+
+	@Override
+	public boolean registerOauthUser(String email, String name) {
+		Users user =new Users();
+		user.setEmail(email);
+		user.setName(name);
+		repo.save(user);
+		return true;
+	}
+
+
+	@Override
+	public boolean isOauthEmailAvailable(String email) {
+	   Optional<Users> user=repo.findByEmail(email);
+	   if(user.isPresent()) return true;
 		return false;
 	}
 

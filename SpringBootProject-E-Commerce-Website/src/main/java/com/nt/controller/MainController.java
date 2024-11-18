@@ -1,15 +1,21 @@
 package com.nt.controller;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -25,15 +31,18 @@ import com.nt.model.Order;
 import com.nt.model.Products;
 import com.nt.model.Users;
 import com.nt.model.WishList;
+import com.nt.service.EmailScheduling;
 import com.nt.service.IAdminsService;
 import com.nt.service.ICartService;
 import com.nt.service.ICategoryService;
 import com.nt.service.IMailOperation;
+import com.nt.service.INotificationService;
 import com.nt.service.IOrderService;
 import com.nt.service.IProductsService;
 import com.nt.service.IUsersService;
 import com.nt.service.IWishlistService;
 
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -59,6 +68,9 @@ public class MainController {
 	private IOrderService orderService;
 	@Autowired
 	private PasswordEncoder encoder;
+	@Autowired
+	private INotificationService notificationService;
+	
 	@Autowired
 	HttpSession session;
 
@@ -878,5 +890,80 @@ public class MainController {
 	public String accessDeniedPage() {
 		return "accessDenied";
 	}
+	
+	@GetMapping("/oauth")
+	public String showUserDetails(Principal principle) {
+		// Get Authentication object
+	    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+	    
+	 // Check if the user is authenticated via OAuth2
+	    if (authentication.getPrincipal() instanceof OAuth2User) {
+	        // Cast to OAuth2User to access user information
+	        OAuth2User oauthUser = (OAuth2User) authentication.getPrincipal();
+	        
+	        // Get the user details
+	        String email = (String) oauthUser.getAttributes().get("email");
+	        String name = (String) oauthUser.getAttributes().get("name");
 
+	        System.out.println("email :: "+email);
+	        System.out.println("name :: "+name);
+	        
+	        boolean flag=true;
+	       
+	        if(!userService.isOauthEmailAvailable(email)) {
+	        	flag=userService.registerOauthUser(email, name);
+	        	mailOperation.sendSuccessfulRegistrationMail(name, email);
+	        }
+	        
+	        if(flag) {
+	        	Optional<Users> us=userService.findByUsername(email);
+				if(us.isPresent()) {
+					session.setAttribute("activeUser", us.get());
+					session.setAttribute("activeUserRole", "user");
+				}
+	        }
+	        
+	        // Redirect to a different page or view
+	        return "redirect:";  // This would be your HTML page showing user details
+	    }
+
+	    // If the user is not authenticated via OAuth2, redirect accordingly
+	    return "redirect:/login";
+	}
+	
+	@GetMapping("/notify")
+	@PreAuthorize("hasAuthority('user')")
+	public String notifyWhenProductIsAvailable(HttpServletRequest request, @RequestParam("pid")Integer productId) {
+		String referer = request.getHeader("Referer");
+	    Integer userId=-1;
+	    
+		Users currentSession=(Users) session.getAttribute("activeUser");
+		
+		if(currentSession!=null) {
+		userId=((Users)session.getAttribute("activeUser")).getId();
+		}else {
+			return "redirect:/login";
+		}
+		if(notificationService.isNotificationAlreadyAvailable(userId, productId)) {
+			Message message = new Message("A notification is already enabled for this product", "error", "alert-danger");
+			session.setAttribute("message", message);
+		}else {
+			notificationService.addProductNotification(userId, productId);
+			Message message = new Message("You will receive a notification when the product is back in stock", "success", "alert-success");
+			session.setAttribute("message", message);
+		}
+		return "redirect:" + (referer != null ? referer : "/");
+	}
+
+	
+	@Autowired
+	private EmailScheduling schedule;
+	// @Scheduled(cron="30 20 * * * *")
+	    public void printNumbersInParallel() throws MessagingException, InterruptedException {
+	        for (int i = 0; i < 100; i++) {
+	            //printService.printHello();
+	        schedule.mytrial();
+	        }
+	    }
+	 
 }//End of Main Controller

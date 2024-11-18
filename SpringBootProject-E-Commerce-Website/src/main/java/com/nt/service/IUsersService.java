@@ -24,4 +24,7 @@ public interface IUsersService {
 	public Optional<Users> findByUsername(String username);
 	//Check user active or not
 	public boolean isUserActiveOrNot(Integer id);
+	//Register user which user option login as google or facebook
+	public boolean registerOauthUser(String email, String name);
+	public boolean isOauthEmailAvailable(String email);
 }

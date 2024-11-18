@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -131,6 +132,8 @@ public class CategoryServiceImpl implements ICategoryService {
 		}
 	}
 
+	
+	
 	//Get all category Types
 	@Override
 	public HashMap<Integer, String> getAllCategoryTypes() {

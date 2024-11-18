@@ -16,7 +16,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.nt.model.NewStock;
 import com.nt.model.Products;
+import com.nt.repository.INewStockRepo;
 import com.nt.repository.IProductsRepo;
 
 @Service
@@ -24,6 +26,8 @@ public class ProductsServiceImpl implements IProductsService {
 
 	@Autowired
 	private IProductsRepo repo;
+	@Autowired
+	private INewStockRepo newStockRepo;
 
 	// Store the product image in a local folder
 	@Override
@@ -133,13 +137,29 @@ public class ProductsServiceImpl implements IProductsService {
 	    int priceAfterDiscount = product.getPrice() - (product.getPrice() * product.getDiscount()) / 100;
 	    product.setPriceAfterDiscount(priceAfterDiscount);
 
+	    
+	    //logic to add new stock entry in database for notification to waiting users
+	    boolean flag=false;
+	    Optional<Products> prod=repo.findById(product.getId());
+	    Integer intialProductQuantity=prod.get().getQuantity();
+	    Integer updatedProductQuantity=0;
+	    
 	    try {
 	        // Save the updated product to the repository
-	        repo.save(product);
+	        Products updatedProduct=repo.save(product);
+	        updatedProductQuantity=updatedProduct.getQuantity();
 	    } catch (Exception e) {
 	        // Return false if an exception occurs during save operation
 	        return false;
 	    }
+	    
+	    if(intialProductQuantity==0 && updatedProductQuantity>0) {
+	    	NewStock newStock=new NewStock();
+	    	newStock.setPid(product.getId());
+	    	newStockRepo.save(newStock);
+	    }
+	    
+	    
 	    // Return true if the product is successfully updated
 	    return true;
 	}
